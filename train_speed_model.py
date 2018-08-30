@@ -17,26 +17,30 @@ if __name__ == '__main__':
     parser.add_argument('-d', dest='dual')
     args = parser.parse_args()
 
-    train_X = np.load('cached/train_X.npy')
+    train_X = np.load('cached/train_X_sub.npy')
     train_y = np.load('cached/train_y.npy')
-    test_X = np.load('cached/test_X.npy')
+    test_X = np.load('cached/test_X_sub.npy')
     test_y = np.load('cached/test_y.npy')
 
     INPUT_SHAPE = train_X[0].shape
 
     if args.dual:
+        print("dual ran")
         raw_train = np.load('cached/train_X_raw.npy')
         raw_test = np.load('cached/test_X_raw.npy')
         train_X = [train_X, raw_train]
         test_X = [test_X, raw_test]
 
-    dual = args.dual == "True"
     model = VGG(INPUT_SHAPE,
                 args.epochs,
                 args.batch_size,
                 args.model_name,
-                dual)
+                int(args.dual))
 
     print("Training model")
+    print("Train running!")
+    model.predict(train_X)
+    print("Testing running!")
+    model.predict(test_X)
     model.train(train_X, train_y, test_X, test_y)
     print("Finished training")

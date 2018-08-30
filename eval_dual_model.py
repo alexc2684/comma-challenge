@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import pdb
 from keras.models import Sequential
 from keras.layers import Input, Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
@@ -8,6 +9,11 @@ from keras import backend as K
 from argparse import ArgumentParser
 
 from vgg import VGG
+
+def write_txt(name, arr):
+    with open(name, 'w') as f:
+        for i in arr:
+            f.write(str(i) + '\n')
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -28,8 +34,8 @@ if __name__ == '__main__':
                 args.model,
                 True)
 
-    print(len(frames))
-    print(len(processed))
-    predictions = model.predict([frames, processed])
-    for i in predictions:
-        print(i)
+    predictions = []
+    for i in range(len(frames)):
+        pred = model.predict([processed[i].reshape(1, processed[i].shape[0], processed[i].shape[1], processed[i].shape[2]), frames[i].reshape(1, frames[i].shape[0], frames[i].shape[1], frames[i].shape[2])])
+        predictions.append(pred[0][0])
+    write_txt('deliverable.txt', predictions)

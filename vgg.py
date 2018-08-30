@@ -13,6 +13,8 @@ class VGG:
             self.model = self.initialize_dual_vgg_model(input_shape)
         else:
             self.model = self.initialize_vgg_model(input_shape)
+        self.model.compile(optimizer='adam', loss='mean_squared_error')
+
         self.epochs = int(epochs)
         self.batch_size = int(batch_size)
         if os.path.isfile(model_name + '.h5'):
@@ -42,26 +44,22 @@ class VGG:
         return model
 
     def initialize_vgg_model(self, input_shape):
-            model = Sequential()
+            input = Input(shape=input_shape)
 
-            model.add(ZeroPadding2D((1,1),input_shape=input_shape))
-            model.add(Conv2D(64, (3, 3), activation='relu'))
-            model.add(ZeroPadding2D((1,1)))
-            model.add(Conv2D(64, (3, 3), activation='relu'))
-            model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-            model = self.conv_vgg(model, 128)
-            model = self.conv_vgg(model, 256)
-            model = self.conv_vgg(model, 512)
-            model = self.conv_vgg(model, 512)
+            x = self.conv_vgg(input, 64)
+            x = self.conv_vgg(x, 128)
+            x = self.conv_vgg(x, 256)
+            x = self.conv_vgg(x, 512)
+            x = self.conv_vgg(x, 512)
 
-            model.add(Flatten())
-            model.add(Dense(4096, activation='relu'))
-            model.add(Dropout(0.5))
-            model.add(Dense(4096, activation='relu'))
-            model.add(Dropout(0.5))
-            model.add(Dense(1, activation=None))
-
+            x = Flatten()(x)
+            x = Dense(4096, activation='relu')(x)
+            x = Dropout(0.5)(x)
+            x = Dense(4096, activation='relu')(x)
+            x = Dropout(0.5)(x)
+            out = Dense(1, activation=None)(x)
+            model = Model(inputs=[input], outputs=[out])
             return model
 
     def initialize_dual_vgg_model(self, input_shape):
@@ -96,7 +94,6 @@ class VGG:
         callbacks = [EarlyStopping(monitor='val_loss', patience=2),
                      TensorBoard(log_dir='logs/{}'.format(self.model_name), batch_size=self.batch_size, write_images=True),
                      ModelCheckpoint(filepath=self.model_name + '.h5', save_best_only=True)]
-        self.model.compile(optimizer='adam', loss='mean_squared_error')
         self.model.fit(train_X,
                        train_y,
                        batch_size=self.batch_size,
@@ -106,4 +103,4 @@ class VGG:
                        validation_data=(test_X, test_y))
 
     def predict(self, test_X):
-        return self.model.evaluate(test_X)
+        return self.model.predict(test_X)
